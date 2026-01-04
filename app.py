@@ -67,7 +67,7 @@ def input_pdf_text(file):
         text += str(page.extract_text())
     return text
 
-st.title("llm-resume-parser")
+st.title("LLM Resume Parser")
 st.text("Upload a CV in PDF format to extract structured information using a local LLM.")
 uploaded_file = st.file_uploader("Choose a PDF file", type="pdf", help="Upload a resume/CV in PDF format.")
 submit_button = st.button("Extract Information")
