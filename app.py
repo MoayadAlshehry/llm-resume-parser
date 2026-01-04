@@ -24,7 +24,7 @@ def parse_cv(cv_text):
     Follow these specific validation rules:
     1. **Missing Data**: If any field is not found, strictly set its value to null.
     2. **Email**: Must be a valid email format. If invalid or not found, set to null.
-    3. **Phone**: Look for numbers starting with '966' or '05'. If the format is correct, extract it. If not found, set to null.
+    3. **Phone**: Look for numbers starting with '966' or '05'. If the format is correct, extract it. If not found, set to null. (Number only, no spaces or +)
     4. **Experience**: If the candidate has no work experience, set "experience" to null (do not return an empty list).
     5. **Certifications**: Extract certificates in a specific list.
 
