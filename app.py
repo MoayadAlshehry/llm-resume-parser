@@ -1,82 +1,55 @@
-import streamlit as st
-import PyPDF2 as pdf
-from openai import OpenAI
+"""Streamlit entry point. Run with: streamlit run app.py."""
 import json
-import re
+import os
+from pathlib import Path
 
+import streamlit as st
+from dotenv import load_dotenv
 
-client = OpenAI(
-    base_url="http://localhost:1234/v1", 
-    api_key="lm-studio"
-)
+from resume_parser import ParserError, Resume, extract_pdf, parse_resume
 
-def clean_json_output(text):
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if match:
-        text = match.group(0) 
-    return text
+load_dotenv()
+st.set_page_config(page_title="LLM Resume Parser", layout="centered")
+st.caption("DOCUMENT WORKFLOWS / STRUCTURED EXTRACTION")
+st.title("From resume to structured data")
+st.write("Extract contact details, skills, experience and education from a text-based PDF, then inspect and download the result.")
+st.caption("The default model endpoint runs locally. Your document is sent to the endpoint you configure; review it before using personal data.")
 
-def parse_cv(cv_text):
-    system_instruction = """
-    You are an advanced AI specialized in parsing resumes (CVs) for recruitment systems.
-    Your task is to extract information and format it as strict JSON.
+with st.container(border=True):
+    uploaded = st.file_uploader("Resume PDF", type=["pdf"], help="Up to 10 MB and 50 pages. Scanned PDFs require OCR first.")
+    extract, example = st.columns(2)
+    run = extract.button("Extract resume", type="primary", use_container_width=True)
+    sample = example.button("Load fictional example", use_container_width=True)
 
-    Follow these specific validation rules:
-    1. **Missing Data**: If any field is not found, strictly set its value to null.
-    2. **Email**: Must be a valid email format. If invalid or not found, set to null.
-    3. **Phone**: Look for numbers starting with '966' or '05'. If the format is correct, extract it. If not found, set to null. (Number only, no spaces or +)
-    4. **Experience**: If the candidate has no work experience, set "experience" to null (do not return an empty list).
-    5. **Certifications**: Extract certificates in a specific list.
+if sample:
+    st.session_state["result"] = Resume.model_validate_json(
+        (Path(__file__).parent / "examples" / "resume.json").read_text(encoding="utf-8")
+    ).model_dump()
+    st.session_state["is_example"] = True
 
-    Required JSON Structure:
-    {
-        "full_name": "String",
-        "email": "String or null",
-        "phone": "String or null",
-        "skills": ["Array of strings"],
-        "experience": [
-            {"company": "String", "role": "String", "years": "String"}
-        ], 
-        "education": [
-            {"institution": "String", "degree": "String"}
-        ],
-        "certifications": [
-            {"name": "String", "issuer": "String or null", "year": "String or null"}
-        ]
-    }
+if run:
+    if uploaded is None:
+        st.warning("Choose a PDF before extracting.")
+    else:
+        st.session_state.pop("result", None)
+        try:
+            with st.spinner("Extracting and validating..."):
+                st.session_state["result"] = parse_resume(extract_pdf(uploaded.getvalue())).model_dump()
+            st.session_state["is_example"] = False
+        except ParserError as exc:
+            st.error(str(exc))
 
-    Return ONLY the JSON object. Do not add any conversational text.
-    """
+if "result" in st.session_state:
+    result = st.session_state["result"]
+    st.subheader("Structured resume")
+    if st.session_state.get("is_example"):
+        st.info("Example only — fictional data, loaded without a model request.")
+    else:
+        st.caption("Schema checked. Review the extracted facts against the original resume; model output can contain errors.")
+    st.json(result, expanded=True)
+    st.download_button("Download JSON", json.dumps(result, indent=2, ensure_ascii=False), "resume.json", "application/json")
 
-    completion = client.chat.completions.create(
-        model="local-model",
-        messages=[
-            {"role": "system", "content": system_instruction},
-            {"role": "user", "content": f"Here is the resume text:\n{cv_text}"}
-        ],
-        temperature=0.0,
-        
-    )
-
-    return completion.choices[0].message.content
-
-def input_pdf_text(file):
-    reader = pdf.PdfReader(file)
-    text = ""
-    for page in reader.pages:
-        text += str(page.extract_text())
-    return text
-
-st.title("LLM Resume Parser")
-st.text("Upload a CV in PDF format to extract structured information using a local LLM.")
-uploaded_file = st.file_uploader("Choose a PDF file", type="pdf", help="Upload a resume/CV in PDF format.")
-submit_button = st.button("Extract Information")
-
-if submit_button:
-    if submit_button and uploaded_file is not None:
-        with st.spinner("Processing..."):
-            cv_text = input_pdf_text(uploaded_file)
-            structured_data = parse_cv(cv_text)
-            st.subheader("Extracted Information:")
-            cleaned_data = clean_json_output(structured_data)
-            st.json(json.loads(cleaned_data))
+with st.expander("Model configuration"):
+    st.write("Endpoint: " + os.getenv("RESUME_PARSER_BASE_URL", "http://localhost:1234/v1"))
+    st.write("Model: " + os.getenv("RESUME_PARSER_MODEL", "local-model"))
+    st.caption("Set configuration in your environment or a local .env file. API keys are never displayed here.")
