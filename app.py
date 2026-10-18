@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from resume_parser import ParserError, Resume, extract_pdf, parse_resume
 
 load_dotenv()
-st.set_page_config(page_title="LLM Resume Parser", layout="centered")
+st.set_page_config(page_title="LLM Resume Parser", page_icon=str(Path(__file__).parent / "assets" / "icon.png"), layout="centered")
 st.caption("DOCUMENT WORKFLOWS / STRUCTURED EXTRACTION")
 st.title("From resume to structured data")
 st.write("Extract contact details, skills, experience and education from a text-based PDF, then inspect and download the result.")
