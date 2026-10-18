@@ -1,4 +1,5 @@
-streamlit
-PyPDF2
-openai
-python-dotenv
+streamlit>=1.40,<2
+pypdf>=5,<7
+openai>=1.55,<3
+python-dotenv>=1,<2
+pydantic>=2.10,<3

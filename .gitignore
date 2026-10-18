@@ -8,3 +8,5 @@ env/
 # Ignore Python Cache
 __pycache__/
 *.pyc
+.venv/
+.pytest_cache/

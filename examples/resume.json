@@ -1,0 +1,9 @@
+{
+  "full_name": "Alex Morgan",
+  "email": "alex.morgan@example.com",
+  "phone": null,
+  "skills": ["Business Analysis", "SQL", "Project Coordination"],
+  "experience": [{"company": "Example Organization", "role": "Project Intern", "years": "2025"}],
+  "education": [{"institution": "Example University", "degree": "BSc Information Systems"}],
+  "certifications": []
+}
