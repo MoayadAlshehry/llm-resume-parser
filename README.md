@@ -1,5 +1,7 @@
 # LLM Resume Parser
 
+![LLM Resume Parser — Structured resume extraction](docs/brand/project-header.png)
+
 **From a PDF resume to inspectable, structured data.**
 
 A Streamlit application that extracts text from a resume, requests structured information from an OpenAI-compatible model endpoint, and validates the response before displaying JSON. The default endpoint is a local LM Studio server.
